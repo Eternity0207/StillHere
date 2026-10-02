@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
+import threading
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -82,6 +83,34 @@ async def telegram_webhook(secret: str, request: Request, tasks: BackgroundTasks
     # Answer Telegram immediately; Gemma can take a couple of seconds.
     tasks.add_task(_safe_handle, await request.json())
     return {"ok": True}
+
+
+# ---------------- heartbeat trigger ----------------
+# Same tick the Render Cron Job runs, exposed for a free scheduler (GitHub Actions) to call.
+# Each call also wakes the free web service if it has spun down.
+
+_beat_lock = threading.Lock()
+
+
+@app.post("/heartbeat")
+def heartbeat_trigger(request: Request, tasks: BackgroundTasks):
+    token = request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+    if not hmac.compare_digest(token, config.ADMIN_KEY):
+        raise HTTPException(403)
+    tasks.add_task(_safe_beat)
+    return JSONResponse({"ok": True, "queued": True}, status_code=202)
+
+
+def _safe_beat() -> None:
+    if not _beat_lock.acquire(blocking=False):
+        return  # a beat is already running; ticks are idempotent, so skipping is safe
+    try:
+        for line in heartbeat.tick():
+            log.info("heartbeat: %s", line)
+    except Exception:
+        log.exception("heartbeat failed")
+    finally:
+        _beat_lock.release()
 
 
 def _safe_handle(update: dict) -> None:
@@ -199,7 +228,7 @@ def setup(request: Request, key: str = ""):
         ("Telegram bot token", bool(config.TELEGRAM_BOT_TOKEN),
          f"@{telegram.bot_username()}" if config.TELEGRAM_BOT_TOKEN else "add TELEGRAM_BOT_TOKEN"),
         ("Webhook", bool(hook.get("url")), hook.get("last_error_message") or ("registered" if hook.get("url") else "not set yet")),
-        ("Heartbeat (Render Cron)", bool(s["last_heartbeat"]),
+        ("Heartbeat", bool(s["last_heartbeat"]),
          f"last beat {timeutil.ago(datetime.fromisoformat(s['last_heartbeat']))}" if s["last_heartbeat"] else "hasn't run yet"),
         ("Database", True, "Postgres" if config.DATABASE_URL.startswith("postgresql") else "SQLite (local)"),
     ]

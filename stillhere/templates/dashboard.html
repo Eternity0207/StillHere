@@ -53,7 +53,7 @@
         <h2>System heartbeat</h2>
         <p class="hb {{ 'hb-ok' if v.heartbeat.ok else 'hb-bad' }}">
           <span class="dot {{ 'dot-ok' if v.heartbeat.ok else 'dot-quiet' }}"></span>
-          {% if v.heartbeat.ok %}Render Cron beat {{ v.heartbeat.ago }}{% else %}No beat since {{ v.heartbeat.ago }}. Check the cron job.{% endif %}
+          {% if v.heartbeat.ok %}Last beat {{ v.heartbeat.ago }}{% else %}No beat since {{ v.heartbeat.ago }}. Check the scheduler.{% endif %}
         </p>
         <p class="muted small">Check-ins go out at {{ v.checkin_time }} ({{ v.tzname }}).</p>
       </section>

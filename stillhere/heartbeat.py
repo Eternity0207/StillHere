@@ -1,4 +1,5 @@
-"""The heartbeat. A Render Cron Job runs `python -m stillhere.heartbeat` every 15 minutes.
+"""The heartbeat. Runs every 10-15 minutes, either as a Render Cron Job (`python -m stillhere.heartbeat`)
+or via POST /heartbeat from a free GitHub Actions schedule.
 
 Each beat decides, from the friend's local clock, whether it's time to:
   1. send the morning check-in,

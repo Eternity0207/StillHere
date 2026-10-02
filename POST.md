@@ -37,17 +37,17 @@ The signature visual is the **pulse**: Ben's last 30 days drawn as a heartbeat. 
 
 ## How I Built It
 
-**The stack:** Python + FastAPI, Telegram Bot API (raw HTTP, no SDK), Gemma 4 via Google AI Studio, and three Render pieces from a single `render.yaml`:
+**The stack:** Python + FastAPI, Telegram Bot API (raw HTTP, no SDK), Gemma 4 via Google AI Studio, Render (free web service + Postgres from one `render.yaml`), and a free GitHub Actions schedule as the heartbeat:
 
 | Render piece | Job |
 |---|---|
 | **Web service** | Telegram webhook, buddy dashboard, Ben's private page |
-| **Cron job** (every 15 min) | The heartbeat: check-in → nudge → tell buddies → Sunday digest |
+| **`POST /heartbeat`** (called every 10 min by GitHub Actions) | The heartbeat: check-in → nudge → tell buddies → Sunday digest |
 | **Postgres** | Check-ins, moods, memories |
 
-### Render is the heartbeat, literally
+### A heartbeat for the price of zero
 
-The cron job wakes every 15 minutes, converts "now" into Ben's local time, and runs a small state machine:
+I didn't have a card for a paid cron job, so the heartbeat is a GitHub Actions schedule that calls an authenticated `POST /heartbeat` on Render every 10 minutes. That also wakes the free instance. (The same code runs as a native Render Cron Job if you uncomment one block.) Each beat converts "now" into Ben's local time and runs a small state machine:
 
 ```python
 if local.time() >= checkin_time and not db.checkin_for_day(today):
@@ -85,7 +85,7 @@ This project is about someone's loneliness, and that changed what I was willing 
 - **Open weights mean I'm not locked in.** Ben's words go to Gemma. Today Google AI Studio serves it for free, but `gemma.py` is one small file. If the terms change or I get a GPU box, I move to vLLM or Ollama by changing one URL. With a closed model, the provider decides where this data goes forever.
 - **One instance per friend.** There's no Still Here company with a database of people's bad days. Each person deploys their own copy from one `render.yaml`, and the data sits in a Postgres that *they* own.
 - **Readable rules.** The exact moment I get an alert about Ben is a number in a file Ben can read. That kind of trust is hard to get from a black-box app.
-- **It costs almost nothing:** a free web service, a cron job that runs for seconds, and free Gemma inference.
+- **It costs nothing:** a free Render web service and Postgres, a free GitHub Actions heartbeat, and free Gemma inference. No card needed.
 
 ## What Ben said
 

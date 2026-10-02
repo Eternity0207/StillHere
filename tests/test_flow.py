@@ -150,6 +150,10 @@ def test_web_guards(clock, sent):
         assert c.get(f"/d/{sam[:-1]}x").status_code == 404
         assert c.get(f"/me/{sam}").status_code == 404  # a buddy can't open Ben's private page
         assert c.get(f"/me/{links.person_token(BEN)}").status_code == 200
+        assert c.post("/heartbeat").status_code == 403
+        assert c.post("/heartbeat", headers={"authorization": "Bearer nope"}).status_code == 403
+        assert c.post("/heartbeat", headers={"authorization": "Bearer test-admin"}).status_code == 202
+        assert db.get_settings()["last_heartbeat"]  # the queued tick ran
         assert c.get("/setup").status_code == 404
         assert c.get("/setup?key=wrong").status_code == 404
         for page in ("/", "/demo", "/demo/me", "/healthz"):

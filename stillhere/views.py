@@ -135,7 +135,7 @@ def build(snap: Snapshot) -> dict:
         state = ("waiting", f"Today's check-in is at {snap.checkin_time}",
                  f"Last heard from {first} {timeutil.ago(snap.last_heard, snap.now)}.")
 
-    hb_ok = bool(snap.last_heartbeat and snap.now - snap.last_heartbeat < timedelta(minutes=40))
+    hb_ok = bool(snap.last_heartbeat and snap.now - snap.last_heartbeat < timedelta(minutes=75))
     avg = round(sum(d["score"] for d in answered7) / len(answered7), 1) if answered7 else None
     return {
         "friend_name": first,

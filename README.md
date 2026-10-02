@@ -61,16 +61,13 @@ One glance tells you whether to call tonight.
 flowchart LR
     B([📱 Ben on Telegram]) <-->|messages| W
     subgraph R [☁️ Render]
-        W[Web Service<br/>FastAPI + webhook<br/>dashboards]
-        C[Cron Job<br/>heartbeat, every 15 min]
+        W[Web Service<br/>FastAPI · webhook<br/>dashboards · /heartbeat]
         D[(Postgres<br/>check-ins, moods,<br/>memories)]
         W <--> D
-        C <--> D
     end
+    H[[⏱️ GitHub Actions<br/>every 10 min]] -->|POST /heartbeat| W
     W <-->|prompts| G{{🧠 Gemma 4<br/>open weights}}
-    C <-->|prompts| G
-    C -->|alerts & digests| S([👥 Buddies on Telegram])
-    W -->|dashboard| S
+    W -->|alerts, digests, dashboard| S([👥 Buddies on Telegram])
 ```
 
 ### A day in the life
@@ -84,9 +81,9 @@ flowchart LR
 | **Ben replies** | ✅ Buddies are told right away. Everyone goes back to their day. |
 | **Sunday 19:00** | 🗓️ Buddies get a short, warm note about Ben's week. |
 
-### Render is the heartbeat
+### The heartbeat
 
-Every 15 minutes a **Render Cron Job** runs `python -m stillhere.heartbeat`. It converts "now" into Ben's local time and runs a small state machine:
+Every 10 minutes a free **GitHub Actions** schedule calls `POST /heartbeat` on the Render service. The call is authenticated, it wakes the free instance if it's asleep, and it runs one *tick*. (The same tick also runs as a native **Render Cron Job**: uncomment one block in `render.yaml`.) Each tick converts "now" into Ben's local time and runs a small state machine:
 
 ```python
 if local.time() >= checkin_time and not db.checkin_for_day(today):
@@ -134,7 +131,7 @@ This project deals with someone's loneliness, and that changed what I was willin
 - **🔓 No lock-in.** Ben's words go to **Gemma 4**, an open-weight model. Today it's served free by Google AI Studio. Moving it to a GPU box I control (vLLM, Ollama, a Render GPU instance) means editing one small file: [`stillhere/gemma.py`](stillhere/gemma.py).
 - **🏠 One instance per friend.** There's no "Still Here company" holding a database of people's bad days. Everyone deploys their own copy, and the data lives in a Postgres *they* own.
 - **📖 Readable rules.** The exact moment a buddy gets alerted is a number in a file Ben can read. Black-box apps can't offer that kind of trust.
-- **💸 Nearly free to run.** A free web service, a cron job that runs for seconds, and free Gemma inference.
+- **💸 Free to run.** A free Render web service and Postgres, a free GitHub Actions heartbeat, and free Gemma inference. No card needed.
 
 ---
 
@@ -147,8 +144,9 @@ Still Here is my entry for the **[Hacktoberfest 2026 Weekend Challenge: Build fo
 | Prize | Why Still Here fits |
 |---|---|
 | 🥇 **Overall winner** ($250 + DEV++ + badge) | Built for one real person, with open AI at its core and privacy as a feature |
-| 🟢 **Best Use of Render** ($200) | Render isn't just the host, it's the **heartbeat**: Web Service + Cron Job + Postgres from one Blueprint, a self-registering webhook via `RENDER_EXTERNAL_URL`, and a dashboard showing when the cron last ran |
+| 🟢 **Best Use of Render** ($200) | Render runs the whole agent: Web Service + Postgres from one free Blueprint, a webhook that registers itself via `RENDER_EXTERNAL_URL`, a secured `/heartbeat` that wakes it, and an optional native Cron Job |
 | 🔵 **Best Use of Gemma** ($200) | Gemma 4 (`gemma-4-26b-a4b-it` with `gemma-4-31b-it` as fallback) writes, understands, summarises and redacts. It's multimodal (Ben can send a photo) and uses structured JSON output |
+| 🐙 **Best Use of GitHub Copilot / Actions** ($100) | A GitHub Actions schedule *is* the heartbeat that keeps Ben's check-ins on time, at zero cost |
 | 🎖️ **Completion badge** | Every valid submission |
 
 **Judging criteria:** writing quality · relevance to the theme · creativity · technical execution · use of partner tech.<br>
@@ -166,7 +164,12 @@ Still Here is my entry for the **[Hacktoberfest 2026 Weekend Challenge: Build fo
    ```
    https://<your-app>.onrender.com/setup?key=<ADMIN_KEY>
    ```
-6. Send your friend the **friend link**, and use the **buddy link** yourself.
+6. **Turn on the heartbeat.** In your GitHub repo, go to **Settings → Secrets and variables → Actions** and add:
+   - `STILLHERE_URL`: `https://<your-app>.onrender.com`
+   - `STILLHERE_ADMIN_KEY`: the same `ADMIN_KEY`
+
+   Then go to **Actions → heartbeat → Run workflow** once to check it works.
+7. Send your friend the **friend link**, and use the **buddy link** yourself.
 
 The web service registers its own Telegram webhook on boot. Nothing else to configure.
 
@@ -176,7 +179,7 @@ The web service registers its own Telegram webhook on boot. Nothing else to conf
 | Piece | Plan | Cost |
 |---|---|---|
 | Web service | Free | $0 (sleeps when idle; the first message wakes it in about a minute, and Telegram retries) |
-| Cron job | Starter | Billed per second of runtime, so pennies a month (covered by Hacktoberfest Render credits) |
+| Heartbeat | GitHub Actions | $0 on public repos (optional native Render Cron Job: Starter plan) |
 | Postgres | Free | $0 for 30 days. Switch `plan: free` to `basic-256mb` in `render.yaml` to keep history |
 | Gemma 4 | Google AI Studio free tier | $0 |
 
@@ -203,13 +206,14 @@ pytest                               # simulated days: check-in, nudge, escalati
 
 | File | Job |
 |---|---|
-| [`stillhere/heartbeat.py`](stillhere/heartbeat.py) | The cron job: one idempotent state machine run every 15 min |
+| [`stillhere/heartbeat.py`](stillhere/heartbeat.py) | The heartbeat: one idempotent state machine, run every 10 min |
+| [`.github/workflows/heartbeat.yml`](.github/workflows/heartbeat.yml) | Free scheduler that calls `POST /heartbeat` |
 | [`stillhere/bot.py`](stillhere/bot.py) | Telegram updates: onboarding, replies, commands, buddy notes |
 | [`stillhere/brain.py`](stillhere/brain.py) | Every prompt sent to Gemma, fallbacks, and the crisis safety net |
 | [`stillhere/gemma.py`](stillhere/gemma.py) | Small Gemma client with retries. Swap providers here |
 | [`stillhere/web.py`](stillhere/web.py) | Webhook, buddy dashboard, Ben's private page, setup, public demo |
 | [`stillhere/views.py`](stillhere/views.py) | Turns rows into the 30-day pulse line |
-| [`render.yaml`](render.yaml) | The whole deployment: web + cron + Postgres |
+| [`render.yaml`](render.yaml) | The whole deployment: web + Postgres (+ optional cron) |
 | [`tests/`](tests) | Whole days simulated with a frozen clock and a fake Telegram |
 
 </details>

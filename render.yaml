@@ -1,8 +1,9 @@
-# One click: https://render.com/deploy?repo=<your fork's URL>
-# Three Render pieces, one job each:
-#   still-here            web service: Telegram webhook + dashboards
-#   still-here-heartbeat  cron job: every 15 min, decides who needs a message
-#   still-here-db         Postgres: check-ins, moods, memories
+# One click: https://render.com/deploy?repo=https://github.com/Eternity0207/StillHere
+# Everything here is on Render's free plans, no card needed:
+#   still-here      web service: Telegram webhook, dashboards, POST /heartbeat
+#   still-here-db   Postgres: check-ins, moods, memories
+# The heartbeat is triggered every 10 min by .github/workflows/heartbeat.yml (free).
+# Prefer a native Render Cron Job? Uncomment the block at the bottom (Starter plan, needs a card).
 
 databases:
   - name: still-here-db
@@ -35,35 +36,24 @@ services:
         value: Asia/Kolkata
       - key: SECRET_KEY
         generateValue: true
-      - key: ADMIN_KEY            # open /setup?key=<this> once to get the invite links
+      - key: ADMIN_KEY            # opens /setup?key=<this>, and authorises POST /heartbeat
         generateValue: true
 
-  - type: cron
-    name: still-here-heartbeat
-    runtime: python
-    plan: starter
-    schedule: "*/15 * * * *"
-    buildCommand: pip install -r requirements.txt
-    startCommand: python -m stillhere.heartbeat
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.8
-      - key: DATABASE_URL
-        fromDatabase:
-          name: still-here-db
-          property: connectionString
-      - key: GEMMA_API_KEY
-        fromService:
-          type: web
-          name: still-here
-          envVarKey: GEMMA_API_KEY
-      - key: TELEGRAM_BOT_TOKEN
-        fromService:
-          type: web
-          name: still-here
-          envVarKey: TELEGRAM_BOT_TOKEN
-      - key: SECRET_KEY
-        fromService:
-          type: web
-          name: still-here
-          envVarKey: SECRET_KEY
+#  - type: cron
+#    name: still-here-heartbeat
+#    runtime: python
+#    plan: starter
+#    schedule: "*/15 * * * *"
+#    buildCommand: pip install -r requirements.txt
+#    startCommand: python -m stillhere.heartbeat
+#    envVars:
+#      - key: PYTHON_VERSION
+#        value: 3.12.8
+#      - key: DATABASE_URL
+#        fromDatabase: { name: still-here-db, property: connectionString }
+#      - key: GEMMA_API_KEY
+#        fromService: { type: web, name: still-here, envVarKey: GEMMA_API_KEY }
+#      - key: TELEGRAM_BOT_TOKEN
+#        fromService: { type: web, name: still-here, envVarKey: TELEGRAM_BOT_TOKEN }
+#      - key: SECRET_KEY
+#        fromService: { type: web, name: still-here, envVarKey: SECRET_KEY }

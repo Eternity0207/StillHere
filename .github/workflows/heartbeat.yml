@@ -1,0 +1,28 @@
+# Free heartbeat for Still Here: wakes the Render web service and runs one tick.
+# Setup: repo Settings → Secrets and variables → Actions → add
+#   STILLHERE_URL        e.g. https://still-here.onrender.com
+#   STILLHERE_ADMIN_KEY  the ADMIN_KEY from the Render service's Environment tab
+name: heartbeat
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  beat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Beat
+        env:
+          APP_URL: ${{ secrets.STILLHERE_URL }}
+          KEY: ${{ secrets.STILLHERE_ADMIN_KEY }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$KEY" ]; then
+            echo "::warning::STILLHERE_URL / STILLHERE_ADMIN_KEY secrets not set yet; skipping."
+            exit 0
+          fi
+          # A sleeping free instance takes ~1 min to wake, hence the generous timeout and retries.
+          curl -fsS --retry 3 --retry-delay 20 --retry-all-errors --max-time 120 \
+            -X POST "${APP_URL%/}/heartbeat" -H "Authorization: Bearer $KEY"
