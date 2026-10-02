@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Your Still Here{% endblock %}
+{% block nav %}
+  {% if demo %}<span class="tag tag-demo">Demo data</span><a href="/demo">Buddy view</a>{% endif %}
+  <span class="viewer">Private to {{ v.friend_name }}</span>
+{% endblock %}
+{% block main %}
+{% set base = '/me/' ~ token if token else '' %}
+<div class="wrap dash">
+  <section class="me-hero">
+    <p class="eyebrow"><span class="dot dot-{{ 'paused' if v.paused else 'ok' }}"></span>{{ 'Paused' if v.paused else 'Check-ins on' }}</p>
+    <h1>Hi {{ v.friend_name }}. This is everything<br>Still Here <em>knows and shares.</em></h1>
+    <p class="lede">Nothing on this page is hidden from you. Your messages never leave the chat; your buddies only ever see what's below.</p>
+  </section>
+
+  <div class="dash-grid me-grid">
+    <section class="card">
+      <div class="card-head"><h2>What your buddies see</h2><span class="muted">exactly this, nothing more</span></div>
+      {% with p = v.pulse %}{% include "_pulse.html" %}{% endwith %}
+      {% include "_days.html" %}
+    </section>
+
+    <aside class="side">
+      <section class="card">
+        <h2>Take a break</h2>
+        <p class="muted small">No check-ins and no alerts while paused. Buddies just see that you're taking a break.</p>
+        <form method="post" action="{{ base }}/pause" class="chips">
+          {% for d, label in [(1, '1 day'), (3, '3 days'), (7, 'A week')] %}
+          <button name="days" value="{{ d }}" class="chip" {{ 'disabled' if demo }}>{{ label }}</button>
+          {% endfor %}
+          {% if v.paused %}<button name="days" value="0" class="chip chip-on" {{ 'disabled' if demo }}>Resume now</button>{% endif %}
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Your rhythm</h2>
+        <form method="post" action="{{ base }}/rhythm" class="form">
+          <label>Morning check-in <input type="time" name="checkin_time" value="{{ v.checkin_time }}" {{ 'disabled' if demo }}></label>
+          <label>Time zone
+            <select name="timezone" {{ 'disabled' if demo }}>
+              {% for tz in timezones %}<option {{ 'selected' if tz == v.tzname }}>{{ tz }}</option>{% endfor %}
+            </select>
+          </label>
+          <button class="btn" {{ 'disabled' if demo }}>Save</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>What I remember</h2>
+          {% if v.memories %}<form method="post" action="{{ base }}/forget"><button class="link-btn" {{ 'disabled' if demo }}>Forget all</button></form>{% endif %}
+        </div>
+        <p class="muted small">Used only to make check-ins feel like they come from someone who's paying attention.</p>
+        <ul class="memories">
+          {% for m in v.memories %}
+          <li><span>{{ m.text }}</span>
+            <form method="post" action="{{ base }}/forget"><input type="hidden" name="memory_id" value="{{ m.id }}">
+              <button class="x" aria-label="Forget: {{ m.text }}" title="Forget this" {{ 'disabled' if demo }}>×</button></form></li>
+          {% else %}
+          <li class="muted">Nothing yet.</li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>Your buddies</h2>
+        <ul class="people">
+          {% for b in buddies %}
+          <li><span class="avatar">{{ b.name[:1] }}</span>{{ b.name }}
+            <form method="post" action="{{ base }}/remove-buddy" class="push"><input type="hidden" name="chat_id" value="{{ b.chat_id }}">
+              <button class="link-btn" {{ 'disabled' if demo }}>Remove</button></form></li>
+          {% else %}
+          <li class="muted">No buddies yet.</li>
+          {% endfor %}
+        </ul>
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}

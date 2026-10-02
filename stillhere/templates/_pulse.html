@@ -1,0 +1,31 @@
+{# The signature visual: one heartbeat per day. Expects `p` = v.pulse #}
+<figure class="pulse" data-pulse>
+  <div class="pulse-plot">
+  <svg viewBox="0 0 {{ p.width }} {{ p.height }}" role="img"
+       aria-label="{{ v.friend_name }}'s last 30 days. Each beat is a check-in; taller beats are brighter days; flat stretches are quiet days.">
+    <defs>
+      <linearGradient id="pulse-fade" x1="0" x2="1">
+        <stop offset="0" stop-color="currentColor" stop-opacity=".25"/>
+        <stop offset=".35" stop-color="currentColor" stop-opacity="1"/>
+      </linearGradient>
+    </defs>
+    {% for line in [0.25, 0.5, 0.75] %}<line class="pulse-grid" x1="0" x2="{{ p.width }}" y1="{{ p.height * line }}" y2="{{ p.height * line }}"/>{% endfor %}
+    {% for a, b in p.paused %}<rect class="pulse-paused" x="{{ a }}" y="0" width="{{ b - a }}" height="{{ p.height }}"/>{% endfor %}
+    <path class="pulse-line" d="{{ p.d }}" stroke="url(#pulse-fade)" pathLength="1"/>
+  </svg>
+  <div class="pulse-points">
+    {% for pt in p.points %}
+    <button type="button" class="pt pt-{{ pt.kind }}" style="left:{{ pt.x / p.width * 100 }}%;top:{{ pt.y / p.height * 100 }}%"
+            data-label="{{ pt.label }}" data-word="{{ pt.word or '' }}" data-score="{{ pt.score or '' }}"
+            data-line="{{ pt.line or ('No reply that day' if pt.kind == 'quiet' else 'Waiting for a reply') }}"
+            aria-label="{{ pt.label }}: {% if pt.score %}{{ pt.word }}, {{ pt.score }} out of 5{% else %}no reply{% endif %}"></button>
+    {% endfor %}
+  </div>
+  </div>
+  <div class="pulse-tip" hidden></div>
+  <figcaption class="pulse-legend">
+    <span><svg class="lg lg-beat" viewBox="0 0 18 10" aria-hidden="true"><path d="M0 7h5l2-6 3 9 2-3h6"/></svg>check-in · taller = brighter day</span>
+    <span><i class="lg lg-quiet"></i>quiet day</span>
+    <span><i class="lg lg-pause"></i>paused</span>
+  </figcaption>
+</figure>

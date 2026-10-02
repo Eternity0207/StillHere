@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Still Here: a daily check-in for the friend who lives far away{% endblock %}
+{% block bodyclass %}page-landing{% endblock %}
+{% block nav %}
+  <a href="#how">How it works</a>
+  <a href="#privacy">Privacy</a>
+  <a class="btn btn-sm" href="/demo">Live demo</a>
+{% endblock %}
+{% block main %}
+<section class="hero wrap">
+  <div class="hero-copy">
+    <p class="eyebrow"><span class="dot dot-ok"></span> Built for Ben, one friend at a time</p>
+    <h1>For the friend who<br><em>lives far away.</em></h1>
+    <p class="lede">Still Here sends Ben one small message every morning on Telegram. Ben replies with anything (a word, an emoji, a photo) and gets on with the day. If Ben goes quiet for too long, it quietly asks you to call.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="/demo">See Ben's dashboard <span aria-hidden="true">→</span></a>
+      <a class="btn btn-ghost" href="https://render.com/deploy?repo={{ repo_url }}">Deploy your own on Render</a>
+    </div>
+    <p class="hero-foot muted">Open source · Gemma 4 open weights · one Render Blueprint · no app to install</p>
+  </div>
+
+  <div class="hero-art" aria-hidden="true">
+    <div class="phone">
+      <div class="phone-head"><span class="avatar">SH</span><div><b>Still Here</b><small>bot</small></div></div>
+      <div class="chat">
+        <div class="bubble bot" style="--d:0">morning Ben ☀️ how did the first football game go?<time>09:30</time></div>
+        <div class="bubble me" style="--d:1">legs destroyed. scored though 😅<time>09:52</time></div>
+        <div class="bubble bot" style="--d:2">a goal in game one?? legend. stretch today, okay? 🙏<time>09:52</time></div>
+        <div class="sys" style="--d:3">Sam sees: <b>4/5 · sore</b>, “First football game, legs destroyed, very happy.”</div>
+      </div>
+    </div>
+    <div class="card hero-pulse">
+      <div class="card-head"><span>Ben · last 30 days</span><span class="tag tag-ok">checked in today</span></div>
+      {% with p = v.pulse %}{% include "_pulse.html" %}{% endwith %}
+    </div>
+  </div>
+</section>
+
+<section id="how" class="wrap section">
+  <header class="section-head">
+    <p class="eyebrow">One beat a day</p>
+    <h2>A heartbeat on Render, a friend on the other end.</h2>
+    <p class="muted">A Render Cron Job wakes up every 15 minutes, checks Ben's local clock, and decides if anything needs to happen. Every beat is idempotent, so a missed run never means a missed friend.</p>
+  </header>
+  <ol class="beats">
+    <li><span class="beat-time">09:30</span><h3>Morning check-in</h3><p>Gemma writes one short message that remembers Ben's life: the interview, the football game, the dentist.</p></li>
+    <li><span class="beat-time">any time</span><h3>Ben replies</h3><p>Anything counts. Gemma answers like a friend and writes one kind, shareable line, never the message itself.</p></li>
+    <li><span class="beat-time">+4h</span><h3>A gentle nudge</h3><p>Still quiet? One tiny follow-up: “a 👍 is plenty.” Never during Ben's night.</p></li>
+    <li class="beat-alert"><span class="beat-time">+10h</span><h3>You get a heads-up</h3><p>“Haven't heard from Ben since yesterday. Maybe call?” When Ben replies, you're told right away.</p></li>
+  </ol>
+</section>
+
+<section id="privacy" class="wrap section split">
+  <div class="card split-card">
+    <p class="eyebrow">What buddies see</p>
+    <h3>A pulse, not a transcript.</h3>
+    <ul class="ticks">
+      <li>A 1–5 mood score and one word per day</li>
+      <li>One short line Gemma writes to be shareable</li>
+      <li>An alert if Ben is quiet for too long</li>
+      <li>A short Sunday note about the week</li>
+    </ul>
+  </div>
+  <div class="card split-card split-private">
+    <p class="eyebrow">What stays with Ben</p>
+    <h3>Ben is always in control.</h3>
+    <ul class="ticks">
+      <li>Every message Ben sends, always</li>
+      <li><code>/pause</code> for a few days, no questions asked</li>
+      <li><code>/forget</code> wipes everything it remembers</li>
+      <li>A private page showing exactly what's shared, and a button to remove any buddy</li>
+    </ul>
+  </div>
+</section>
+
+<section class="wrap section open">
+  <header class="section-head">
+    <p class="eyebrow">Why open</p>
+    <h2>A safety net you can own.</h2>
+  </header>
+  <div class="open-grid">
+    <div><h3>Open weights</h3><p>Ben's words go to <b>Gemma 4</b>, an open-weight model. Today it's served by Google AI Studio; tomorrow it can run on a GPU box you control, with one line changed. No vendor gets to keep a log of someone's loneliness.</p></div>
+    <div><h3>One instance per friend</h3><p>No company, no accounts, no shared database of feelings. Each person you care about gets their own tiny deployment from one <code>render.yaml</code>.</p></div>
+    <div><h3>Change how it behaves</h3><p>The prompts, the nudge timings and the safety net are plain Python. Ben's friends can read every rule that decides when they get an alert.</p></div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ v.friend_name }} · Still Here{% endblock %}
+{% block nav %}
+  {% if demo %}<span class="tag tag-demo">Demo data</span><a href="/demo/me">Ben's view</a>{% endif %}
+  <span class="viewer">Hi, {{ viewer }}</span>
+{% endblock %}
+{% block main %}
+<div class="wrap dash">
+  <section class="status status-{{ v.state.kind }}">
+    <div class="status-main">
+      <p class="eyebrow"><span class="dot dot-{{ v.state.kind }}"></span>{{ v.friend_name }} · right now</p>
+      <h1>{{ v.state.headline }}</h1>
+      <p class="status-detail">{{ v.state.detail }}</p>
+    </div>
+    <dl class="stats">
+      <div><dt>Streak</dt><dd>{{ v.streak }}<small>day{{ '' if v.streak == 1 else 's' }}</small></dd></div>
+      <div><dt>This week</dt><dd>{{ v.answered7 }}<small>/7 check-ins</small></dd></div>
+      <div><dt>Avg mood</dt><dd>{{ v.avg7 if v.avg7 is not none else '–' }}<small>/5</small></dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Last 30 days</h2><span class="muted">tap a beat</span></div>
+    {% with p = v.pulse %}{% include "_pulse.html" %}{% endwith %}
+  </section>
+
+  <div class="dash-grid">
+    <section class="card">
+      <div class="card-head"><h2>Day by day</h2><span class="muted">what {{ v.friend_name }} shares with buddies</span></div>
+      {% include "_days.html" %}
+    </section>
+
+    <aside class="side">
+      <section class="card">
+        <h2>Send {{ v.friend_name }} a note</h2>
+        <p class="muted small">Delivered through the bot, signed with your name.</p>
+        <form method="post" action="{{ '/d/' ~ token ~ '/note' if token else '#' }}" class="note-form">
+          <label class="sr" for="note">Your note</label>
+          <textarea id="note" name="note" rows="3" maxlength="600" placeholder="good luck at the offsite! call me after?" required {{ 'disabled' if demo }}></textarea>
+          <button class="btn btn-primary" {{ 'disabled title="Disabled in the demo"' if demo }}>Send note 💌</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>{{ v.friend_name }}'s buddies</h2>
+        <ul class="people">
+          {% for b in v.buddies %}<li><span class="avatar">{{ b[:1] }}</span>{{ b }}{% if b == viewer %} <span class="muted">(you)</span>{% endif %}</li>{% endfor %}
+        </ul>
+        <p class="muted small">Everyone here gets the same alert if {{ v.friend_name }} goes quiet for a long while.</p>
+      </section>
+
+      <section class="card heartbeat-card">
+        <h2>System heartbeat</h2>
+        <p class="hb {{ 'hb-ok' if v.heartbeat.ok else 'hb-bad' }}">
+          <span class="dot {{ 'dot-ok' if v.heartbeat.ok else 'dot-quiet' }}"></span>
+          {% if v.heartbeat.ok %}Render Cron beat {{ v.heartbeat.ago }}{% else %}No beat since {{ v.heartbeat.ago }}. Check the cron job.{% endif %}
+        </p>
+        <p class="muted small">Check-ins go out at {{ v.checkin_time }} ({{ v.tzname }}).</p>
+      </section>
+    </aside>
+  </div>
+
+  <p class="fineprint">You see a mood score and one line a day. {{ v.friend_name }}'s actual messages stay between {{ v.friend_name }} and the bot.</p>
+</div>
+{% endblock %}

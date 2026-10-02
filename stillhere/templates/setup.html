@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Setup · Still Here{% endblock %}
+{% block nav %}<span class="viewer">Setup</span>{% endblock %}
+{% block main %}
+<div class="wrap dash">
+  <section class="me-hero">
+    <p class="eyebrow">For whoever deployed this</p>
+    <h1>Set up Still Here <em>for {{ s.friend_name }}.</em></h1>
+  </section>
+
+  <div class="dash-grid">
+    <div class="stack">
+      <section class="card">
+        <h2>1 · Invite people</h2>
+        <p class="muted small">Send the first link to {{ s.friend_name }} only. Anyone with the second becomes a buddy (and {{ s.friend_name }} is told).</p>
+        <div class="invite">
+          <label>{{ s.friend_name }}'s link</label>
+          <div class="copy"><input readonly value="{{ friend_link }}"><button class="btn btn-sm" data-copy>Copy</button></div>
+        </div>
+        <div class="invite">
+          <label>Buddy link</label>
+          <div class="copy"><input readonly value="{{ buddy_link }}"><button class="btn btn-sm" data-copy>Copy</button></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>2 · Rhythm</h2>
+        <form method="post" action="/setup/settings" class="form form-grid">
+          <label>Friend's name <input name="friend_name" value="{{ s.friend_name }}" maxlength="40" required></label>
+          <label>Check-in time <input type="time" name="checkin_time" value="{{ s.checkin_time }}"></label>
+          <label class="span2">Time zone
+            <select name="timezone">{% for tz in timezones %}<option {{ 'selected' if tz == s.timezone }}>{{ tz }}</option>{% endfor %}</select>
+          </label>
+          <label>Gentle nudge after <span class="inline"><input type="number" name="nudge_after_h" min="1" max="12" step="0.5" value="{{ s.nudge_after_h }}"> h</span></label>
+          <label>Tell buddies after <span class="inline"><input type="number" name="escalate_after_h" min="2" max="20" step="0.5" value="{{ s.escalate_after_h }}"> h</span></label>
+          <button class="btn btn-primary span2">Save</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>3 · People</h2>
+        <ul class="people">
+          {% if friend %}<li><span class="avatar">{{ friend.name[:1] }}</span>{{ friend.name }} <span class="tag tag-ok">friend</span>
+            {% if friend_page %}<a class="push small" href="{{ friend_page }}">their private page →</a>{% endif %}</li>
+          {% else %}<li class="muted">{{ s.friend_name }} hasn't joined yet.</li>{% endif %}
+          {% for b in buddies %}<li><span class="avatar">{{ b.name[:1] }}</span>{{ b.name }} <span class="tag">buddy</span></li>{% endfor %}
+        </ul>
+      </section>
+    </div>
+
+    <aside class="side">
+      <section class="card">
+        <h2>Health</h2>
+        <ul class="checks">
+          {% for label, ok, detail in checks %}
+          <li><span class="dot {{ 'dot-ok' if ok else 'dot-quiet' }}"></span><div><b>{{ label }}</b><small>{{ detail }}</small></div></li>
+          {% endfor %}
+        </ul>
+        <form method="post" action="/setup/beat"><button class="btn">Run a heartbeat now</button></form>
+        <p class="muted small">Same code the Render Cron Job runs. Safe to press any time.</p>
+      </section>
+      <section class="card">
+        <h2>Right now</h2>
+        <p><b>{{ v.state.headline }}</b></p>
+        <p class="muted small">{{ v.state.detail }}</p>
+      </section>
+    </aside>
+  </div>
+</div>
+{% endblock %}

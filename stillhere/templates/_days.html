@@ -1,0 +1,27 @@
+{# Day-by-day list of exactly what buddies can see. Expects v #}
+<ol class="days">
+  {% for d in v.days %}
+  <li class="day day-{{ d.kind }}">
+    <div class="day-when">
+      <span class="day-label">{{ d.label }}</span>
+    </div>
+    <div class="day-body">
+      {% if d.kind == 'ok' %}
+        <div class="day-top">
+          <span class="mood mood-{{ d.score }}" title="{{ d.score }}/5">{% for i in range(5) %}<i class="{{ 'on' if i < d.score }}"></i>{% endfor %}</span>
+          <span class="day-word">{{ d.word }}</span>
+        </div>
+        <p class="day-line">{{ d.line }}</p>
+      {% elif d.kind == 'quiet' %}
+        <p class="day-line day-meta">No reply that day. Buddies got a heads-up.</p>
+      {% elif d.kind == 'paused' %}
+        <p class="day-line day-meta">Paused, taking a break.</p>
+      {% else %}
+        <p class="day-line day-meta">Check-in sent, waiting for a reply.</p>
+      {% endif %}
+    </div>
+  </li>
+  {% else %}
+  <li class="day day-empty"><p class="day-line day-meta">Nothing yet. The first check-in goes out at {{ v.checkin_time }}.</p></li>
+  {% endfor %}
+</ol>

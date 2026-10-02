@@ -1,0 +1,69 @@
+# One click: https://render.com/deploy?repo=<your fork's URL>
+# Three Render pieces, one job each:
+#   still-here            web service: Telegram webhook + dashboards
+#   still-here-heartbeat  cron job: every 15 min, decides who needs a message
+#   still-here-db         Postgres: check-ins, moods, memories
+
+databases:
+  - name: still-here-db
+    plan: free            # free Postgres expires after 30 days; switch to basic-256mb to keep Ben's history
+    databaseName: stillhere
+    user: stillhere
+
+services:
+  - type: web
+    name: still-here
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn stillhere.web:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_URL
+        fromDatabase:
+          name: still-here-db
+          property: connectionString
+      - key: GEMMA_API_KEY        # free key from https://aistudio.google.com/apikey
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN   # from @BotFather on Telegram
+        sync: false
+      - key: FRIEND_NAME
+        value: Ben
+      - key: FRIEND_TIMEZONE
+        value: Asia/Kolkata
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_KEY            # open /setup?key=<this> once to get the invite links
+        generateValue: true
+
+  - type: cron
+    name: still-here-heartbeat
+    runtime: python
+    plan: starter
+    schedule: "*/15 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m stillhere.heartbeat
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_URL
+        fromDatabase:
+          name: still-here-db
+          property: connectionString
+      - key: GEMMA_API_KEY
+        fromService:
+          type: web
+          name: still-here
+          envVarKey: GEMMA_API_KEY
+      - key: TELEGRAM_BOT_TOKEN
+        fromService:
+          type: web
+          name: still-here
+          envVarKey: TELEGRAM_BOT_TOKEN
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: still-here
+          envVarKey: SECRET_KEY

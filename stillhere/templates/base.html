@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Still Here{% endblock %}</title>
+  <meta name="description" content="Still Here: a tiny, open-source daily check-in for the friend who lives far away. Gemma + Render + Telegram.">
+  <meta name="theme-color" content="#f6f1e8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#16130f" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=5">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <div class="wrap topbar-in">
+      <a class="brand" href="/" aria-label="Still Here home">
+        <svg class="brand-mark" viewBox="0 0 32 20" aria-hidden="true"><path d="M1 12h7l2.5-4 3 9 4-16 3.5 11h2l1.5-3 2 3H31"/></svg>
+        <span>Still Here</span>
+      </a>
+      <nav class="topnav">{% block nav %}{% endblock %}</nav>
+    </div>
+  </header>
+  {% if request.query_params.get('saved') %}
+  <div class="toast" role="status">
+    {% set f = request.query_params.get('saved') %}
+    {% if f == 'note' %}Note delivered 💌{% elif f == 'pause' %}Check-ins updated{% elif f == 'forget' %}Forgotten{% elif f == 'buddy' %}Buddy removed{% elif f.startswith('beat:') %}Heartbeat ran: {{ f[5:] }}{% else %}Saved{% endif %}
+  </div>
+  {% endif %}
+  <main id="main">{% block main %}{% endblock %}</main>
+  <footer class="foot">
+    <div class="wrap foot-in">
+      <span>Still Here · open source · runs on <strong>Gemma</strong> + <strong>Render</strong></span>
+      <span class="muted">Not an emergency service. If someone is in danger, call local emergency services.</span>
+    </div>
+  </footer>
+  <script src="/static/app.js?v=5" defer></script>
+</body>
+</html>
